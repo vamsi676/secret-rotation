@@ -1,0 +1,30 @@
+[Unit]
+Description=Secret rotation demo service svc-%i
+After=network.target
+
+[Service]
+Type=simple
+User=demoapp
+Group=demoapp
+# Read by systemd (as root) so the file itself can stay root:root 0600.
+# Leading "-" lets the service start (reporting NO_SECRET) before the first refresh.
+EnvironmentFile=-/etc/demo-app/secrets.env
+ExecStart=/usr/bin/python3 /opt/demo-app/demo_service.py --name %i
+Restart=on-failure
+RestartSec=2
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (gitignored) and edit.
+aws_profile = "default"         # AWS CLI profile to deploy with
+alert_email = ""                # e.g. "you@example.com"; "" = no SNS email subscription
+
+# Optional overrides
+# rotation_schedule    = "rate(4 hours)"
+# rotate_immediately   = true
+# instance_type        = "t3.micro"
+# fault_injection_step = ""     # demo only: "testSecret" etc.

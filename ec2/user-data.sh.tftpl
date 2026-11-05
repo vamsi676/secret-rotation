@@ -1,0 +1,32 @@
+#!/bin/bash
+# Bootstrap for the secret-rotation demo. Contains NO secrets: only code,
+# units, and the secret *name*. Files are passed base64-encoded to avoid
+# heredoc/quoting issues.
+set -euo pipefail
+
+id demoapp >/dev/null 2>&1 || useradd --system --no-create-home --shell /sbin/nologin demoapp
+
+install -d -m 0755 -o root -g root /etc/demo-app /opt/demo-app
+
+echo '${demo_service_b64}' | base64 -d > /opt/demo-app/demo_service.py
+chmod 0755 /opt/demo-app/demo_service.py
+
+echo '${refresh_script_b64}' | base64 -d > /root/refresh_secrets.sh
+chown root:root /root/refresh_secrets.sh
+chmod 0700 /root/refresh_secrets.sh
+
+echo '${svc_unit_b64}' | base64 -d > /etc/systemd/system/svc@.service
+echo '${refresh_unit_b64}' | base64 -d > /etc/systemd/system/refresh-secrets.service
+chmod 0644 /etc/systemd/system/svc@.service /etc/systemd/system/refresh-secrets.service
+
+cat > /etc/demo-app/refresh.conf <<'EOF'
+SECRET_ID=${secret_id}
+AWS_REGION=${region}
+EOF
+chmod 0644 /etc/demo-app/refresh.conf
+
+systemctl daemon-reload
+systemctl enable --now svc@a.service svc@b.service svc@c.service
+systemctl enable refresh-secrets.service
+# First boot: kick it off without blocking cloud-init. Later boots run it via WantedBy.
+systemctl start --no-block refresh-secrets.service
